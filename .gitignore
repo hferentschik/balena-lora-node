@@ -1,0 +1,5 @@
+.vscode
+.idea
+venv
+
+lora/dragino.yaml

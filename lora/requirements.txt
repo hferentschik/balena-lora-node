@@ -1,0 +1,7 @@
+balena-sdk
+RPi.GPIO
+spidev
+gps3
+pycrypto
+toml
+adafruit-circuitpython-rfm69

@@ -1,0 +1,16 @@
+name: "balena-lora-node"
+description: >-
+  Balena project using a Dragino LoRa/GPS_HAT.
+type: "sw.application"
+joinable: false
+assets:
+  repository:
+    type: blob.asset
+    data:
+      url: "https://github.com/hferentschik/balena-lora-node"
+data:
+  applicationConfigVariables:
+    - BALENA_HOST_CONFIG_CONNECTIVITY_CHECK: true
+  defaultDeviceType: "raspberrypi4-64"
+  supportedDeviceTypes:
+    - "raspberrypi3-64"
