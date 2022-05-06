@@ -3,3 +3,5 @@
 venv
 
 lora/dragino.yaml
+lora/cache.json
+**/__pycache__
