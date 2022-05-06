@@ -63,7 +63,8 @@ class DataPayload:
         padding=[0x00] * 16
         for i in range(k):
             idx = (i + 1) * 16
-            padded_payload += (self.payload[idx - 16:idx] + padding)[:16]
+            tmp = (self.payload[idx - 16:idx] + padding)[:16]
+            padded_payload += bytearray(tmp)
 
         payload = []
         for i in range(len(self.payload)):
@@ -92,7 +93,8 @@ class DataPayload:
         padding=bytearray([0x00]*16)
         for i in range(k):
             idx = (i + 1) * 16
-            padded_payload += (data[idx - 16:idx] + padding)[:16]
+            tmp = (data[idx - 16:idx] + list(padding))[:16]
+            padded_payload += bytearray(tmp)
 
         payload = []
         for i in range(len(data)):

@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import traceback
 
 from random import randrange
 from .SX127x.LoRa import LoRa, MODE
@@ -67,7 +68,7 @@ class Dragino(LoRa):
     """
     def __init__(
             self, config_filename,
-            logging_level=DEFAULT_LOG_LEVEL,noGPS=False
+            logging_level=DEFAULT_LOG_LEVEL,noGPS=True
             ):
 
         self.logger = logging.getLogger("Dragino")
@@ -329,6 +330,7 @@ class Dragino(LoRa):
 
         except Exception as e:
             self.logger.debug(f"Error processing downlink mtype={mtype} error was {e}.")
+            traceback.print_exc()
 
     def on_rx_done(self):
         """

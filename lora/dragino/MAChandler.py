@@ -62,7 +62,7 @@ class MAC_commands(object):
         if config is None:
             self.logger.error("config is None")
             exit()
-            
+
         self.config=config
 
         self.cache={} # TTN dynamic settings
@@ -98,27 +98,27 @@ class MAC_commands(object):
         # this gives the code a starting point on first run
 
         self.cache={}
-                
+
         for k in MAC_SETTINGS:
-            try: 
+            try:
                 self.logger.debug(f"Setting self.cache[{k}] to {self.config[TTN][k]}")
                 self.cache[k]=self.config[TTN][k]
-                
+
             except KeyError:
                 self.logger.info(f"missing TTN section key {k} ignored")
 
 
         # get TTN network keys
         auth_mode=self.config[TTN][AUTH_MODE]
-        
+
         for k in KEY_SETTINGS:
             try:
                 self.logger.debug(f"Setting self.cache[{k}] to {self.config[TTN][auth_mode][k]}")
                 self.cache[k]=self.config[TTN][auth_mode][k]
             except KeyError:
-                self.logger.info(f"Missing {auth_mode} TTN key {k} ignored") 
+                self.logger.info(f"Missing {auth_mode} TTN key {k} ignored")
 
-        
+
         self.loadCache() # load any cached values
 
         # always reset these
@@ -141,7 +141,7 @@ class MAC_commands(object):
     def setLastSNR(self,SNR):
         """
         used by status reply to server status req
-        
+
         not cached because it can vary a lot
         """
         self.logger.info(f"last SNR value {SNR}")
@@ -149,7 +149,7 @@ class MAC_commands(object):
 
     '''
     getters and setters for cached values
-    
+
     '''
 
     def getLinkCheckStatus(self):
@@ -160,38 +160,38 @@ class MAC_commands(object):
 
     def setRX1Delay(self,delay):
         """ passed in with JOIN_ACCEPT payload
-        
+
         :param delay: seconds
-        :return Nothing: no reply expected 
+        :return Nothing: no reply expected
         """
         self.logger.info(f"set RX1 delay {delay}")
         self.cache[RX1_DELAY]=delay
         self.saveCache()
-        
+
     def getDevAddr(self):
         try:
             return self.cache[DEVADDR]
         except:
             return bytearray([0x00,0x00,0x00,0x00])
-    
+
     def setDevAddr(self,DevAddr):
         self.cache[DEVADDR]=DevAddr
         self.saveCache()
-        
+
     def getNewSKey(self):
         return self.cache[NEWSKEY]
 
     def setNewSKey(self,key):
         self.cache[NEWSKEY]=key
         self.saveCache()
-        
+
     def getAppSKey(self):
         return self.cache[APPSKEY]
 
     def setAppSKey(self,appskey):
         self.cache[APPSKEY]=appskey
         self.saveCache()
-        
+
     def getAppKey(self):
         return self.cache[APPKEY]
 
@@ -203,7 +203,7 @@ class MAC_commands(object):
 
     def getFCntUp(self):
         return self.cache[FCNTUP]
-        
+
     def setFCntUp(self,count):
         self.cache[FCNTUP]=count
         self.saveCache()
@@ -212,14 +212,14 @@ class MAC_commands(object):
         """
         When joining only the first three frequencies
         should be used
-        
+
         max duty cycle is also selected
-        
+
         :return (freq,sf,bw)
         """
         freq=random.choice(self.channelFrequencies[0:3])
         self.cache[MAX_DUTY_CYCLE]=self.getMaxDutyCycle(freq)
-        
+
         sf,bw=self.config[self.frequency_plan][DATA_RATES][self.cache[DATA_RATE]]
 
         self.lastSendSettings=(freq,sf,bw)
@@ -234,69 +234,69 @@ class MAC_commands(object):
         :return tuple: (freq,sf,bw)
         """
         return self.lastSendSettings
-        
+
     def getSendSettings(self):
         """
         randomly choose a frequency
-        
+
         once joined all frequencies are available for use
-        
+
         Use current data rate
-        
+
         :return (freq,sf,bw)
         """
         max_channel=self.config[self.frequency_plan][MAX_CHANNELS]
-        
+
         freq=random.choice(self.channelFrequencies[:max_channel])
-        
+
         self.cache[MAX_DUTY_CYCLE]=self.getMaxDutyCycle(freq)
-          
+
         sf,bw=self.config[self.frequency_plan][DATA_RATES][self.cache[DATA_RATE]]
         self.lastSendSettings=(freq,sf,bw)
-        
+
         self.logger.debug(f"using send settings freq {freq} sf {sf} bw {bw}")
         return freq,sf,bw
-        
+
     def getRX1Settings(self):
         """
         RX1 is normally the same as last send settings unless
         the RX1_DR_OFFSET is not zero
-        
+
         frequency is not changed
-        
+
         :return (freq,sf,bw)
         """
 
         if self.cache[RX1_DR]==self.cache[DATA_RATE]:
             self.logger.debug(f"using last send settings for RX1")
             return self.lastSendSettings
-        
+
         # RX1 data rate is different but frequency is normally the same
         freq=self.lastSendSettings[0]   # we only want the frequency
- 
+
         # frequency may have been fixed by MAC command
         if self.cache[RX1_FREQ_FIXED]:
             freq=self.cache[RX1_FREQUENCY]
- 
+
         sf,bw=self.config[self.frequency_plan][DATA_RATES][self.cache[RX1_DR]]
-        
+
         self.logger.debug(f"rx1 settings freq {freq} sf {sf} bw {bw}")
-                
+
         return freq,sf,bw
 
     def getRX2Settings(self):
         """
         RX2 is a fixed frequency,sf and bw
-        
+
         :return (freq,sf,bw)
         """
         freq=self.cache[RX2_FREQUENCY]
-        
+
         sf,bw=self.config[self.frequency_plan][DATA_RATES][self.cache[RX2_DR]]
-        
+
         self.logger.debug(f"rx2 settings freq {freq} sf {sf} bw {bw}")
         return freq,sf,bw
-        
+
     def getMaxDutyCycle(self,freq=None):
         """
         return the max duty cycle for a given frequency
@@ -306,7 +306,7 @@ class MAC_commands(object):
             if freq is None:
                 freq=self.channelFrequencies[0] #
                 self.logger.error(f"Nothing has been transmitted using max duty cycle for {freq} instead")
-                
+
         DC_table=self.config[self.frequency_plan][DUTY_CYCLE_TABLE]
         for (minFreq,maxFreq,dc) in DC_table:
             #self.cache[MAX_EIRP]= eirp
@@ -342,86 +342,86 @@ class MAC_commands(object):
     def getFrequencyPlan(self):
         """
         get the frequency plan channel frequencies
-        
+
         used internally
-        
+
         """
         self.logger.info("loading frequency plan")
         try:
-            
+
             self.logger.info(f"Frequency Plan is {self.frequency_plan}")
 
             self.channelDRRange = [(0, 7)] * self.config[self.frequency_plan][MAX_CHANNELS]
             self.channelFrequencies=self.config[self.frequency_plan][LORA_FREQS]
 
             self.newChannelIndex=0
-            
+
             self.logger.info("Frequency Plan loaded ok")
 
         except Exception as e:
-            
+
             self.logger.error(f"error loading frequency plan. Check if it exists in the config.toml. {e}")
 
     def setDLsettings(self,settings):
-        """ 
-        passed in with JOIN_ACCEPT payload       
-        
+        """
+        passed in with JOIN_ACCEPT payload
+
         :param settings: upper byte RX1 DR offset, lower RX2 DR
         :return nothing: JOIN_ACCEPT does not expect a reply
         """
         rx1_dr_offset=(settings & 0x70)>>4
-        
+
         dr_table_row=self.config[self.frequency_plan][DR_OFFSET_TABLE][self.cache[DATA_RATE]]
         rx1_dr=dr_table_row[rx1_dr_offset]
-        
+
         self.cache[RX1_DR]=rx1_dr
         self.cache[RX2_DR]=settings & 0x0F
         self.saveCache()
-        
+
         self.logger.info(f"DL settings rx1_dr_offset{rx1_dr_offset} rx1_DR {rx1_dr} rx2_DR {settings & 0x0F}")
-        
+
     def _computeFreq(self,a):
         """
-        :param  a: byte array of 3 octets 
+        :param  a: byte array of 3 octets
         :return f: frequency in xxx.y mHz  format
         """
         freq=(a[2] << 16 ) + (a[1] << 8) + a[0] * 100
         # frequency is like 868100000 but we want 868.1
-        return freq/1000000    
-        
+        return freq/1000000
+
     def handleCFList(self,delay,cflist):
         """
             upto 16 bytes
             5 channel frequencies in groups of 3 bytes per frequency
             plus one byte 0 passed in with JOIN_ACCEPT payload
-        
-        :param cflist: 5 channel frequencies packed in 3 bytes LSB first     
+
+        :param cflist: 5 channel frequencies packed in 3 bytes LSB first
         """
-        
+
         self.logger.info("processing cfList from JOIN_ACCEPT")
-        
+
         if cflist[-1:]!=0:
             self.logger.info("cfList type is non-zero")
-        
+
         ch=4;
         for entry in range(5):
             # get each slice
             i=entry*3
             self.lora_freqs[ch]=self._computeFreq(cflist[i:i+3])
             ch+=1
-        
+
     def setCacheDefaults(self):
         """
         default settings
-        
+
         """
         self.logger.info("Setting default MAC values using user config values")
-        
+
         self.cache[DATA_RATE]=self.config[TTN][DATA_RATE]
         self.cache[CHANNEL_FREQUENCIES] = self.config[self.frequency_plan][LORA_FREQS]
         self.cache[OUTPUT_POWER]=self.config[TTN][OUTPUT_POWER]
         self.cache[MAX_POWER]=self.config[TTN][MAX_POWER]
-                
+
         #self.channelDRrange = [(0,7)] * self.config[self.frequency_plan][MAX_CHANNELS]  # all disabled
 
         # extract freqs from frequency plan
@@ -433,7 +433,7 @@ class MAC_commands(object):
         # these are listed in groups according to the MAC command
         # which changes the value
         # they are also over written from the user config and MAC cache
-        
+
 
         # link ADR req
         #for a in [CH_MASK,CH_MASK_CTL,NB_TRANS]:
@@ -442,12 +442,12 @@ class MAC_commands(object):
         # Duty Cycle req - percentage airtime allowed
         # duty cycle depends on frequency but is mostly
         # 1% in EU868
-        self.cache[DUTY_CYCLE]=1  
+        self.cache[DUTY_CYCLE]=1
 
         # RXParamSetup
         self.cache[RX1_DR]=self.config[TTN][RX1_DR]
         self.cache[RX2_DR]=self.config[TTN][RX2_DR]
-        
+
 
         # TX and RX1 frequencies change, RX2 is constant
         # RX1 frequency can be set by MAC
@@ -455,15 +455,15 @@ class MAC_commands(object):
         self.cache[RX2_FREQUENCY]=self.config[TTN][RX2_FREQUENCY]
         self.cache[RX1_DELAY]=self.config[TTN][RX1_DELAY]
         self.cache[RX2_DELAY]=self.config[TTN][RX2_DELAY]
-        
+
         # with OTAA some of these are set after joining
         # and cached so that a JOIN isn't needed every time
         auth_mode=self.config[TTN][AUTH_MODE]
-        
+
         self.cache[APPKEY]=self.config[TTN][auth_mode][APPKEY]
         self.cache[APPEUI]=self.config[TTN][auth_mode][APPEUI]
         self.cache[DEVEUI]=self.config[TTN][auth_mode][DEVEUI]
-                    
+
         if self.config[TTN][AUTH_MODE]==OTAA:
             # NEWSKEY and APPSKEY are set after joining
             self.cache[DEVADDR]=bytearray([0x00,0x00,0x00,0x00])
@@ -479,12 +479,12 @@ class MAC_commands(object):
         # frame counts - will be reset on OTAA joining
         self.cache[FCNTUP]=self.config[TTN][FCNTUP]
         self.cache[FCNTDN]=self.config[TTN][FCNTDN]
-             
+
         self.logger.info("MAC default settings finished")
-        
+
         # do not call saveCache() - loadCache() will do that if
         # the cache file doesn't exist
-        
+
     def saveCache(self):
         """
         MAC commands received from TTN alter device behaviour
@@ -494,35 +494,35 @@ class MAC_commands(object):
 
             with open(self.config[TTN][MAC_CACHE], "w") as f:
                 json.dump(self.cache, f)
-            
+
         except Exception as e:
             self.logger.info(f"Saving MAC settings failed {e}.")
-    
+
     def incrementFcntUp(self):
         """
         increments the FcntUp and save to cache
         """
         self.cache[FCNTUP]+=1
         self.saveCache()
-        
+
     def checkFcntDn(self,fcntdn):
         """
         fcntdn should be incrementing
         """
         prev=self.cache[FCNTDN]
-        
+
         if fcntdn<=prev:
             self.logger.warn("received downlink FCntDn < or = previous")
             return
-        
+
 
         self.cache[FCNTDN]=fcntdn
         self.saveCache()
-            
+
     def loadCache(self):
         """
         load mac parameters (if saved)
-        
+
         """
 
         self.logger.info("Loading MAC settings")
@@ -530,7 +530,7 @@ class MAC_commands(object):
 
         settings={}
 
-        try:           
+        try:
             with open(self.config[TTN][MAC_CACHE], "r") as f:
                 settings = json.load(f)
 
@@ -539,9 +539,9 @@ class MAC_commands(object):
                 return
 
             self.cache=settings
-    
+
             self.logger.info("cached settings loaded ok")
-            
+
         except Exception as e:
             self.logger.info(f"cached settings load failed {e}. Saving current defaults")
             self.saveCache()
@@ -550,17 +550,17 @@ class MAC_commands(object):
         """
         these are the MAC replies. The spec says the server can send multiple
         commands in a packet.
-        
+
         The replies are cleared when this method is called otherwise
         they would be sent to TTN with every uplink
-        
+
         :param: None
         :return: (Fopts,FoptsLen)
         :rtype: tuple
         """
         FOpts=self.macReplies # should this be reversed?
         FOptsLen=len(FOpts)
-        
+
         self.logger.info(f"check for FOpts to attach to uplink len={FOptsLen} FOpts={FOpts}")
 
         self.macReplies=[] # clear them as we don't want to send with every messages
@@ -568,7 +568,7 @@ class MAC_commands(object):
         if FOptsLen==0:
             self.logger.info("no FOpts")
             return [],0
-            
+
         if FOptsLen>0 and FOptsLen<=16:
             return (FOpts,FOptsLen)
 
@@ -593,7 +593,7 @@ class MAC_commands(object):
         the command CID
 
         This method is called if a message includes a MAC payload
-        
+
         :param macPayload: a MAC payload object
         """
         self.logger.debug("checking MAC payload for MAC commands")
@@ -604,10 +604,10 @@ class MAC_commands(object):
 
         FCnt=macPayload.get_fhdr().get_fcnt() # frame downlink frame counter
         self.logger.debug(f"received frame FCnt={FCnt} FCntDn={self.cache[FCNTDN]}")
-  
+
         self.cache[FCNTDN]=FCnt
-    
-        FOpts=macPayload.get_fhdr().fhdr.get_fopts()
+
+        FOpts=macPayload.get_fhdr().get_fopts()
         FPort=macPayload.get_fport()
         FRMpayload=macPayload.get_frm_payload()
         self.logger.debug(f"FCtrl={FCtrl} FCnt={FCnt} FOpts={FOpts} FoptsLen={FOptsLen} FPort={FPort} FRMpayload={FRMpayload}")
@@ -622,7 +622,7 @@ class MAC_commands(object):
 
         # MAC commands can appear in FOpts field or FRMpayload but not both
         self.macCmds=None
-        
+
         if FPort == 0:
             # MAC commands only and in FRMpayload
             FOpts=FRMpayload
@@ -641,13 +641,13 @@ class MAC_commands(object):
     def processFopts(self,FOpts):
         """
         can be called directly if downlink message does not include a FRM payload
-        
+
         :param FOpts: array of MAC commands
-        
+
         """
         self.macIndex=0
         self.macCmds=FOpts
-        
+
         while self.macIndex<len(self.macCmds):
             CID=self.macCmds[self.macIndex]
             # called functions add to self.macReplies
@@ -658,7 +658,7 @@ class MAC_commands(object):
             except KeyError:
                 self.logger.error(f"invalid MAC command CID {CID}. Aborting MAC handling")
                 break
-                
+
         # update any changes
         self.saveCache()
 
@@ -666,7 +666,7 @@ class MAC_commands(object):
         """
         adds a link check request to the macReplies list
         this will be sent with the next uplink
-        
+
         The server will send a LINK_CHECK_ANS.
         """
         self.macReplies+=[MCMD.LINK_CHECK_REQ]
@@ -674,21 +674,21 @@ class MAC_commands(object):
     def link_check_ans(self):
         """
         The server sends this to acknowledge us sending a LinkCheckReq
-        
+
         Recieved payload will be 2 bytes [Margin][GwCnt]
-        
+
         GwCnt is number of gateways which received the transmission from us
         Margin is the the demod margin (db) range 0..254 (255 reserved)
-        
+
         no response needed
         """
-        
+
         # values can be retrieved with getLinkCheckStatus()
         self.gw_margin=min(self.gw_margin,self.macCmds[self.macIndex+1])
         self.gw_cnt=max(self.gw_cnt,self.macCmds[self.macIndex+2])
         self.logger.debug(f"link check ans margin {self.gw_margin} GwCnt {self.gw_cnt}")
         self.macIndex+=3
-        
+
     def link_adr_req(self):
         """
         Server is asking us to do a data rate adaption
@@ -729,7 +729,7 @@ class MAC_commands(object):
         Setup RX2 parameters
 
         payload=[DLSettings:1] [Frequency:3]:
-        
+
         DLsettings [RFU:7,RX1DROffset:6..4,RX2DataRate:3..0]
 
         reply is 1 byte with bit encoding
@@ -739,25 +739,25 @@ class MAC_commands(object):
 
         # TODO only if all are valid otherwise no change
         reply=0x00
-        
+
         rx1_dr_offset=(DLSettings & 0xE0) >> 4
         if 0<=rx1_dr_offset<=5:
             reply=reply or 0x01
-            
+
         rx2_dr_index=(DLSettings & 0x0F)
         if 0<=rx2_dr_index<=8:
             reply=reply or 0x02
-            
+
         freq=self._computeFreq(self.macCmds[self.macIndex+2:self.macIndex+4])
-        
+
         if freq in self.lora_freqs:
             reply=reply or 0x04
-            
+
         if reply==0x07:
             self.cache[RX1_DR]+=rx1_dr_offset
             self.cache[RX2_DR]=rx2_dr_index
             self.cache[RX2_FREQUENCY]=freq
-        
+
         # Channel ACK       0=unusable, 1 ok
         # RX2DataRateAck    0=unknown data rate, 1 ok
         # RX1DROffsetACK    0=not in allowed ranbge, 1 ok
@@ -795,30 +795,30 @@ class MAC_commands(object):
         """
         ChIndex = self.macCmds[self.macIndex+1]
         newFreq=self._computeFreq(self.macCmds[self.macIndex+2:self.macIndex+5])
-        
+
         DRRange = self.macCmds[self.macIndex+5] # uplink data rate range (max,min)
-        
+
         maxDR=(DRRange &0xF0) >>4
         minDR=(DRRange &0x0F)
-        
+
         # TODO - check newFreq is possible first
         # needs to know region parameters
         minFreq=min(self.ChannelFrequencies)
         maxFreq=max(self.channelFrequencies)
-        
+
         if not (minFreq<=newFreq<=maxFreq):
             self.logger.info(f"new freq {newFreq} not in range min {minFreq} - {maxFreq}")
             self.macReplies+=[MCMD.NEW_CHANNEL_REQ,0x02]
-  
+
         else:
             self.channelFrequencies[ChIndex] = newFreq
             self.channelDRRange[ChIndex] = (minDR,maxDR)
-            
+
             self.logger.info(f"NewChannelReq chIndex {chIndex} freq {newFreq} maxDR {maxDR} minDR {minDR}")
 
             # answer - assume all ok
             self.macReplies+=[MCMD.NEW_CHANNEL_REQ,0x03]
-        
+
         self.macIndex+=6
 
     def rx_timing_setup_req(self):
@@ -828,11 +828,11 @@ class MAC_commands(object):
         rx1_delay=self.macCmds[self.macIndex+1] & 0x0f # seconds
         if rx1_delay == 0:
             rx1_delay = 1
-            
+
         self.cache[RX1_DELAY]=rx1_delay
 
         self.logger.info(f"rx timing setup RX1 delay={rx1_delay}")
-        
+
         self.macReplies+=[MCMD.RX_TIMING_SETUP_REQ]
         self.macIndex+=2
 
@@ -842,19 +842,19 @@ class MAC_commands(object):
         [RFU:7..6][DownlinkDwellTime:5][UplinkDwellTime:4][maxEIRP:3..0]
 
         DwellTimes: 0= no limit, 1=400ms
-        
+
         Currently the values are stored and acknowledged but not used
         """
         dldt=self.macCmds[self.macIndex+1] & 0x20 >> 5
         uldt=self.macCmds[self.macIndex+1] & 0x10 >> 4
         maxEirp=self.macCmds[self.macIndex+1] & 0x0F
-        
+
         self.cache[DOWNLINK_DWELL_TIME]=dldt
         self.cache[UPLINK_DWELL_TIME]=uldt
         self.cache[MAX_EIRP]=maxEirp
-        
+
         self.logger.info(f"tx param setup DL dwell {dldt} UL dwell {uldt} maxEIRP {maxEirp}")
-        
+
         self.macReplies+=[MCMD.TX_PARAM_SETUP_REQ]
         self.macIndex += 2
 
@@ -878,7 +878,7 @@ class MAC_commands(object):
 
         self.logger.info(f"DL channel req ChIndex {ChIndex} newFreq {newFreq}")
 
-        # answer - 
+        # answer -
         # assume Uplink Frequency exists and channel freq ok
         self.macReplies+=[MCMD.DL_CHANNEL_REQ,0x03]
         self.macIndex += 5
@@ -914,7 +914,7 @@ class MAC_commands(object):
         # we can determin the time the server received the request
         # but it will be hard to tell how long it takes to receive
         # the information back hence there will be an error. However,
-        # if the end device time is massively different then it should be 
+        # if the end device time is massively different then it should be
         # corrected but the Dragino HAT has a GPS and can be time synced to that
         # use the server time at your peril
 
