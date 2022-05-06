@@ -1,7 +1,10 @@
+adafruit-circuitpython-rfm69
 balena-sdk
+Flask
+gps3
+Paste
+pycrypto
 RPi.GPIO
 spidev
-gps3
-pycrypto
 toml
-adafruit-circuitpython-rfm69
+waitress

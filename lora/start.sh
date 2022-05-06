@@ -6,10 +6,4 @@ if [[ "$START_SSHD" == "1" ]]; then
   /usr/sbin/sshd -p 22 &
 fi
 
-while true
-do
-	echo "Press [CTRL+C] to stop.."
-	sleep 10
-done
-
-# python3 main.py
+python3.9 main.py

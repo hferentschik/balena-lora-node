@@ -47,7 +47,7 @@ COPY dragino/ dragino/
 COPY dragino.toml .
 COPY test.py .
 COPY test_downlink.py .
-COPY testMAC.py .
 COPY start.sh .
+COPY main.py .
 
 CMD ./start.sh
